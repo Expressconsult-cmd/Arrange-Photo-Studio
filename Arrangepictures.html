@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express Consult Limited - Premium Image Layout Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #0056b3, #0088ff);
+            --success-gradient: linear-gradient(135deg, #218838, #28a745);
+            --danger-gradient: linear-gradient(135deg, #c82333, #dc3545);
+            --neutral-gradient: linear-gradient(135deg, #5a6268, #6c757d);
+            --panel-bg: linear-gradient(145deg, #ffffff, #f1f3f5);
+            --border-color: #b0b7bd;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #dee2e6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Top Header Styling */
+        header {
+            width: 100%;
+            background-color: #1a252f;
+            color: #ffffff;
+            text-align: center;
+            padding: 24px 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-bottom: 4px solid #0056b3;
+            text-transform: uppercase;
+        }
+
+        /* Bold & Colorful Control Panel Bar */
+        .control-panel {
+            background: var(--panel-bg);
+            padding: 20px 35px;
+            margin: 25px auto;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            border: 2px solid #ced4da;
+            max-width: 95%;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Making Labels Bigger, Bolder and Highly Visible */
+        label {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1a252f;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+        }
+
+        /* Enhanced High-Contrast Select Dropdowns & File Upload inputs */
+        select, input[type="file"] {
+            padding: 10px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #212529;
+            background-color: #ffffff;
+            cursor: pointer;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.2s ease-in-out;
+        }
+
+        select:focus, input[type="file"]:focus {
+            border-color: #0056b3;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,86,179,0.25);
+        }
+
+        input[type="file"] {
+            background: #e9ecef;
+            font-size: 13px;
+        }
+
+        /* Colorful Gradient Button Suite */
+        button {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: transform 0.1s, box-shadow 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        button.primary-btn { background: var(--primary-gradient); }
+        button.primary-btn:hover { box-shadow: 0 6px 12px rgba(0, 86, 179, 0.4); }
+
+        button.secondary-btn { background: var(--success-gradient); }
+        button.secondary-btn:hover { box-shadow: 0 6px 12px rgba(40, 167, 69, 0.4); }
+
+        button.clear-btn { background: var(--danger-gradient); }
+        button.clear-btn:hover { box-shadow: 0 6px 12px rgba(220, 53, 69, 0.4); }
+
+        /* Canvas Space Setup */
+        .canvas-container {
+            padding: 10px 20px 60px 20px;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Virtual Sheet Component */
+        #paper-workspace {
+            background: white;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.25);
+            box-sizing: border-box;
+            padding: 10mm;
+            display: grid;
+            gap: 6mm;
+            transition: all 0.2s ease;
+        }
+
+        /* Photo Frames Inside Workspace */
+        .image-frame {
+            border: 3px dashed #6c757d;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden; 
+            background: #f1f3f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .image-container-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+        }
+
+        .image-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none; 
+            transform-origin: center center;
+        }
+
+        /* Fine-Tuning Deck Panel Overlay */
+        .frame-ui {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(26, 37, 47, 0.92);
+            padding: 14px 8px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .nudge-btn {
+            background: #495057;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.2s;
+        }
+        .nudge-btn:hover { background: #007bff; }
+
+        .zoom-slider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: 20px;
+            height: 110px;
+            cursor: pointer;
+            margin: 4px 0;
+        }
+
+        /* High-Visibility Delete Button */
+        .remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #dc3545;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 15; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .remove-btn:hover { background: #bd2130; transform: scale(1.05); }
+
+        /* Printing Scale Mappings */
+        .size-a4.portrait  { width: 210mm; height: 297mm; }
+        .size-letter.portrait { width: 216mm; height: 279mm; }
+        .size-a3.portrait  { width: 297mm; height: 420mm; }
+        .size-a5.portrait  { width: 148mm; height: 210mm; }
+
+        .size-a4.landscape { width: 297mm; height: 210mm; }
+        .size-letter.landscape { width: 279mm; height: 216mm; }
+        .size-a3.landscape { width: 420mm; height: 297mm; }
+        .size-a5.landscape { width: 210mm; height: 148mm; }
+
+        /* Clean Output Filters */
+        .exporting .frame-ui, .exporting .remove-btn { display: none !important; }
+        .exporting .image-frame { border: none !important; background: transparent !important; }
+    </style>
+</head>
+<body>
+
+    <header>EXPRESS CONSULT LIMITED</header>
+
+    <div class="control-panel">
+        <div class="control-group">
+            <label>Paper Size</label>
+            <select id="paper-size">
+                <option value="a4">A4 Format</option>
+                <option value="letter">Letter Format</option>
+                <option value="a3">A3 Format</option>
+                <option value="a5">A5 Format</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Orientation</label>
+            <select id="orientation">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Grid Layout</label>
+            <select id="layout-grid">
+                <option value="1">1 Image (Full Page)</option>
+                <option value="2">2 Images</option>
+                <option value="4">4 Images (Grid)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Upload Images</label>
+            <input type="file" id="image-upload" accept="image/*" multiple>
+        </div>
+
+        <div class="control-group" style="flex-direction: row; align-self: flex-end; gap: 12px; margin-left: 10px;">
+            <button class="primary-btn" onclick="exportToPDF()">Print to PDF</button>
+            <button class="secondary-btn" onclick="saveAsImage()">Save to Image</button>
+            <button class="clear-btn" onclick="clearWorkspace()">Clear All</button>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <div id="paper-workspace" class="size-a4 portrait">
+            </div>
+    </div>
+
+    <script>
+        const paperWorkspace = document.getElementById('paper-workspace');
+        const paperSizeSelect = document.getElementById('paper-size');
+        const orientationSelect = document.getElementById('orientation');
+        const layoutGridSelect = document.getElementById('layout-grid');
+        const imageUpload = document.getElementById('image-upload');
+
+        let uploadedImages = []; 
+
+        function updatePaperLayout() {
+            const size = paperSizeSelect.value;
+            const orientation = orientationSelect.value;
+            const gridCount = parseInt(layoutGridSelect.value);
+
+            paperWorkspace.className = `size-${size} ${orientation}`;
+
+            if (gridCount === 1) {
+                paperWorkspace.style.gridTemplateColumns = "1fr";
+                paperWorkspace.style.gridTemplateRows = "1fr";
+            } else if (gridCount === 2) {
+                paperWorkspace.style.gridTemplateColumns = orientation === 'portrait' ? "1fr" : "1fr 1fr";
+                paperWorkspace.style.gridTemplateRows = orientation === 'portrait' ? "1fr 1fr" : "1fr";
+            } else if (gridCount === 4) {
+                paperWorkspace.style.gridTemplateColumns = "1fr 1fr";
+                paperWorkspace.style.gridTemplateRows = "1fr 1fr";
+            }
+            renderFrames();
+        }
+
+        paperSizeSelect.addEventListener('change', updatePaperLayout);
+        orientationSelect.addEventListener('change', updatePaperLayout);
+        layoutGridSelect.addEventListener('change', updatePaperLayout);
+
+        imageUpload.addEventListener('change', function(e) {
+            const files = e.target.files;
+            for(let i=0; i<files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImages.push({
+                        src: event.target.result,
+                        zoom: 1.0,
+                        x: 0,
+                        y: 0
+                    });
+                    renderFrames();
+                }
+                reader.readAsDataURL(files[i]);
+            }
+        });
+
+        function renderFrames() {
+            const gridMax = parseInt(layoutGridSelect.value);
+            paperWorkspace.innerHTML = '';
+
+            for (let i = 0; i < gridMax; i++) {
+                const frame = document.createElement('div');
+                frame.className = 'image-frame';
+
+                if (uploadedImages[i]) {
+                    const imgObj = uploadedImages[i];
+
+                    const innerContainer = document.createElement('div');
+                    innerContainer.className = 'image-container-inner';
+                    innerContainer.style.transform = `translate(${imgObj.x}px, ${imgObj.y}px)`;
+
+                    const img = document.createElement('img');
+                    img.src = imgObj.src;
+                    img.style.transform = `scale(${imgObj.zoom})`;
+
+                    let isDragging = false;
+                    let initialX, initialY;
+
+                    innerContainer.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        initialX = e.clientX - imgObj.x;
+                        initialY = e.clientY - imgObj.y;
+                    });
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        imgObj.x = e.clientX - initialX;
+                        imgObj.y = e.clientY - initialY;
+                        innerContainer.style.transform = `translate(${imgObj.x}px, ${imgObj.y}px)`;
+                    });
+
+                    window.addEventListener('mouseup', () => { isDragging = false; });
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.onclick = function() {
+                        uploadedImages.splice(i, 1);
+                        renderFrames();
+                    };
+
+                    const uiControls = document.createElement('div');
+                    uiControls.className = 'frame-ui';
+
+                    const btnPlus = document.createElement('button');
+                    btnPlus.className = 'nudge-btn';
+                    btnPlus.innerText = '+';
+                    btnPlus.onclick = function() {
+                        if (imgObj.zoom < 4.0) {
+                            imgObj.zoom = parseFloat((imgObj.zoom + 0.05).toFixed(2));
+                            slider.value = imgObj.zoom;
+                            img.style.transform = `scale(${imgObj.zoom})`;
+                        }
+                    };
+
+                    const slider = document.createElement('input');
+                    slider.type = 'range';
+                    slider.className = 'zoom-slider';
+                    slider.min = '1.0';
+                    slider.max = '4.0';
+                    slider.step = '0.01';
+                    slider.value = imgObj.zoom;
+                    
+                    slider.addEventListener('input', (e) => {
+                        imgObj.zoom = parseFloat(e.target.value);
+                        img.style.transform = `scale(${imgObj.zoom})`;
+                    });
+
+                    const btnMinus = document.createElement('button');
+                    btnMinus.className = 'nudge-btn';
+                    btnMinus.innerText = '−';
+                    btnMinus.onclick = function() {
+                        if (imgObj.zoom > 1.0) {
+                            imgObj.zoom = parseFloat((imgObj.zoom - 0.05).toFixed(2));
+                            slider.value = imgObj.zoom;
+                            img.style.transform = `scale(${imgObj.zoom})`;
+                        }
+                    };
+
+                    uiControls.appendChild(btnPlus);
+                    uiControls.appendChild(slider);
+                    uiControls.appendChild(btnMinus);
+
+                    innerContainer.appendChild(img);
+                    frame.appendChild(innerContainer);
+                    frame.appendChild(removeBtn);
+                    frame.appendChild(uiControls);
+                } else {
+                    frame.innerHTML = `<span style="color: #6c757d; font-weight: 700; font-size:13px; pointer-events:none;">Empty Layout Slot</span>`;
+                }
+
+                paperWorkspace.appendChild(frame);
+            }
+        }
+
+        function clearWorkspace() {
+            uploadedImages = [];
+            imageUpload.value = '';
+            renderFrames();
+        }
+
+        function exportToPDF() {
+            paperWorkspace.classList.add('exporting');
+            const size = paperSizeSelect.value.toUpperCase();
+            const orientation = orientationSelect.value;
+            
+            const opt = {
+                margin:       0,
+                filename:     `ExpressConsult_Layout_${size}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: size.toLowerCase(), orientation: orientation }
+            };
+
+            html2pdf().set(opt).from(paperWorkspace).save().then(() => {
+                paperWorkspace.classList.remove('exporting');
+            });
+        }
+
+        function saveAsImage() {
+            paperWorkspace.classList.add('exporting');
+            html2canvas(paperWorkspace, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'ExpressConsult_Layout.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                paperWorkspace.classList.remove('exporting');
+            });
+        }
+
+        updatePaperLayout();
+    </script>
+</body>
+</html>
